@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Declaration Form Filler</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; display: flex; justify-content: center; padding: 20px; }
+        .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+        h2 { text-align: center; color: #333; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input[type="text"], input[type="date"], input[type="file"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; transition: background 0.3s; }
+        button:hover { background-color: #218838; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>ACT Declaration Form</h2>
+    <form action="/process" method="POST" enctype="multipart/form-data">
+        
+        <div class="form-group">
+            <label>I (Name):</label>
+            <input type="text" name="name" placeholder="Enter your full name" required>
+        </div>
+
+        <div class="form-group">
+            <label>S/o (Father's Name):</label>
+            <input type="text" name="father_name" placeholder="Father's Name" required>
+        </div>
+
+        <div class="form-group">
+            <label>Currently Residing At:</label>
+            <input type="text" name="current_address" placeholder="Current short address">
+        </div>
+
+        <div class="form-group">
+            <label>Application Date (ACT on...):</label>
+            <input type="text" name="app_date" placeholder="e.g. 12th Nov 2024">
+        </div>
+
+        <div class="form-group">
+            <label>Permanent Address:</label>
+            <input type="text" name="perm_address" placeholder="Full Permanent Address">
+        </div>
+
+        <div class="form-group">
+            <label>Moved to City of:</label>
+            <input type="text" name="city" placeholder="e.g. Hyderabad">
+        </div>
+
+        <div class="form-group">
+            <label>Installation Address:</label>
+            <input type="text" name="install_address" placeholder="Full Installation Address">
+        </div>
+
+        <div class="form-group">
+            <label>Place:</label>
+            <input type="text" name="place" placeholder="City Name">
+        </div>
+
+        <div class="form-group">
+            <label>Date of Signing:</label>
+            <input type="date" name="sign_date">
+        </div>
+
+        <div class="form-group">
+            <label>Upload Signature (Image):</label>
+            <input type="file" name="signature" accept="image/*" required>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button type="submit" name="output_format" value="pdf" style="background-color: #28a745; flex: 1;">
+                Generate PDF
+            </button>
+            
+            <button type="submit" name="output_format" value="jpeg" style="background-color: #007bff; flex: 1;">
+                Download JPEG
+            </button>
+        </div>
+    </form>
+</div>
+    </form>
+</div>
+
+</body>
+</html>

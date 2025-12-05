@@ -1,0 +1,19 @@
+# 1. IGNORE USER DATA (Crucial)
+uploads/
+temp_sig.png
+Filled_Declaration.jpg
+Filled_Declaration.pdf
+
+# 2. IGNORE SYSTEM FILES
+__pycache__/
+*.pyc
+
+# 3. IGNORE DEBUG/DEVELOPER TOOLS (Keep the repo clean)
+grid_reference.pdf
+debug_view.pdf
+debug_pdf.py
+make_grid.py
+
+# 4. IGNORE VIRTUAL ENVIRONMENTS (If you have one)
+venv/
+env/
