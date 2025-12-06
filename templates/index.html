@@ -53,7 +53,13 @@
 
         <div class="form-group">
             <label>Installation Address:</label>
-            <input type="text" name="install_address" placeholder="Full Installation Address">
+            
+            <select name="install_mode" id="install_mode" onchange="toggleInstallInput()" style="width: 100%; padding: 10px; margin-bottom: 5px; border-radius: 4px;">
+            <option value="same">Same as Current Address</option>
+            <option value="manual">Enter Manually</option>
+        </select>
+
+        <input type="text" name="install_address" id="install_address" placeholder="Enter Installation Address" style="display:none;">
         </div>
 
         <div class="form-group">
@@ -84,6 +90,19 @@
 </div>
     </form>
 </div>
-
+<script>
+    function toggleInstallInput() {
+        var mode = document.getElementById("install_mode").value;
+        var input = document.getElementById("install_address");
+        
+        // If Manual, show the box. If Same, hide it.
+        if (mode === "manual") {
+            input.style.display = "block";
+        } else {
+            input.style.display = "none";
+            input.value = ""; // Optional: Clear it if they switch back
+        }
+    }
+</script>
 </body>
 </html>

@@ -3,6 +3,7 @@ from datetime import datetime
 from PIL import Image, ImageEnhance
 from flask import Flask, render_template, request, send_file
 import fitz  # PyMuPDF
+from rembg import remove
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
@@ -87,11 +88,23 @@ def process_pdf():
         doc = fitz.open(pdf_path)
         page = doc[0]
 
-        # 1. Loop through text fields
+        # --- 1. AUTO-COPY LOGIC (Before the loop) ---
+        install_mode = request.form.get('install_mode', 'same')
+        form_overrides = {}
+        if install_mode == 'same':
+            # This copies the text!
+            form_overrides['install_address'] = request.form.get('current_address', '')
+        # --------------------------------------------
+
+        # --- 2. LOOP THROUGH FIELDS (Only Once!) ---
         for field_name, coords in POSITIONS.items():
             if field_name == "signature": continue 
             
-            user_input = request.form.get(field_name, "")
+            # Check Override First
+            if field_name in form_overrides:
+                user_input = form_overrides[field_name]
+            else:
+                user_input = request.form.get(field_name, "")
             
             # Date Fix
             if user_input and (field_name == "sign_date" or field_name == "app_date"):
@@ -102,66 +115,58 @@ def process_pdf():
                     pass 
 
             if user_input:
-                # CHECK IF THIS FIELD NEEDS WRAPPING
+                # Text Wrapping Logic
                 if "width_limit" in coords:
                     line1, line2 = fit_text_in_lines(page, user_input, "tiro", 12, coords["width_limit"])
-                    
-                    # Print Line 1
                     page.insert_text((coords['x'], coords['y']), line1, fontsize=12, fontname="tiro", color=(0, 0, 0))
-                    
-                    # Print Line 2 (If exists)
                     if line2:
                         page.insert_text((coords['x2'], coords['y2']), line2, fontsize=12, fontname="tiro", color=(0, 0, 0))
                 else:
-                    # Normal Printing
+                    # Normal Text
                     page.insert_text((coords['x'], coords['y']), user_input, fontsize=12, fontname="tiro", color=(0, 0, 0))
 
-        # 2. Handle Signature (FIXED POSITION & SIZE)
-        # 2. SMART SIGNATURE SCALING & CENTERING
+        # --- 3. SIGNATURE (With your settings: 0.1 Bright / 5.0 Contrast) ---
         sig_file = request.files.get('signature')
         if sig_file:
             sig_path = os.path.join(UPLOAD_FOLDER, "temp_sig.png")
             
-            # A. Process Image (Darken/Sharpen)
+            # AI Background Removal
             img = Image.open(sig_file)
-            img = ImageEnhance.Brightness(img).enhance(0.1)  # Darken Ink
-            img = ImageEnhance.Contrast(img).enhance(5.0)    # Whiten Background
-            img = ImageEnhance.Sharpness(img).enhance(2.0)   # Sharpen Lines
+            img = remove(img) 
+            if img.mode != 'RGBA':
+                img = img.convert('RGBA')
+
+            # Your Specific Enhancements
+            enhancer = ImageEnhance.Brightness(img)
+            img = enhancer.enhance(0.1)  # Darken
+            enhancer = ImageEnhance.Contrast(img)
+            img = enhancer.enhance(5.0)  # High Contrast
+            enhancer = ImageEnhance.Sharpness(img)
+            img = enhancer.enhance(2.0)  # Sharpen
+            
             img.save(sig_path, "PNG", quality=100)
             
-            # B. Get Dimensions
+            # Centering Logic
             img_w, img_h = img.size
-            
-            # Get dimensions of our Allowed Box (from POSITIONS)
             box_x = POSITIONS["signature"]["x"]
             box_y = POSITIONS["signature"]["y"]
             box_w = POSITIONS["signature"]["width"]
             box_h = POSITIONS["signature"]["height"]
 
-            # C. Calculate Scaling Factor
-            # This logic finds the biggest size that fits without cutting the image
             scale = min(box_w / img_w, box_h / img_h)
-            
             new_w = int(img_w * scale)
             new_h = int(img_h * scale)
 
-            # D. Calculate Centering Offsets
-            # This math moves the image to the exact center of the box
             offset_x = (box_w - new_w) / 2
             offset_y = (box_h - new_h) / 2
             
             final_x = box_x + offset_x
             final_y = box_y + offset_y
 
-            # E. Insert Image at Calculated Position
             img_rect = fitz.Rect(final_x, final_y, final_x + new_w, final_y + new_h)
             page.insert_image(img_rect, filename=sig_path)
-            
-            # keep_proportion=True -> Prevents stretching
-            # overlay=True -> Ensures it sits on top of text
-            page.insert_image(img_rect, filename=sig_path, keep_proportion=True, overlay=True)
 
-        # 3. Output Logic (PDF/JPEG)
+        # --- 4. OUTPUT ---
         output_format = request.form.get('output_format', 'pdf')
         if output_format == 'jpeg':
             pix = page.get_pixmap(matrix=fitz.Matrix(2, 2)) 

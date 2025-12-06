@@ -2,3 +2,5 @@ Flask
 PyMuPDF
 Pillow
 gunicorn
+rembg
+onnxruntime
