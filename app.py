@@ -3,7 +3,7 @@ from datetime import datetime
 from PIL import Image, ImageEnhance
 from flask import Flask, render_template, request, send_file
 import fitz  # PyMuPDF
-from rembg import remove
+from rembg import remove, new_session
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
@@ -125,28 +125,33 @@ def process_pdf():
                     # Normal Text
                     page.insert_text((coords['x'], coords['y']), user_input, fontsize=12, fontname="tiro", color=(0, 0, 0))
 
-        # --- 3. SIGNATURE (With your settings: 0.1 Bright / 5.0 Contrast) ---
+        # 2. SMART SIGNATURE (MEMORY SAFE VERSION)
         sig_file = request.files.get('signature')
         if sig_file:
             sig_path = os.path.join(UPLOAD_FOLDER, "temp_sig.png")
             
-            # AI Background Removal
             img = Image.open(sig_file)
-            img = remove(img) 
+            
+            # --- MEMORY FIX: USE LITE MODEL (u2netp) ---
+            # This model is ~5MB instead of ~170MB. It runs easily on free servers.
+            my_session = new_session("u2netp")
+            img = remove(img, session=my_session)
+            # -------------------------------------------
+            
             if img.mode != 'RGBA':
                 img = img.convert('RGBA')
 
-            # Your Specific Enhancements
+            # Enhance Ink (Your existing settings)
             enhancer = ImageEnhance.Brightness(img)
-            img = enhancer.enhance(0.1)  # Darken
+            img = enhancer.enhance(0.1) 
             enhancer = ImageEnhance.Contrast(img)
-            img = enhancer.enhance(5.0)  # High Contrast
+            img = enhancer.enhance(5.0) 
             enhancer = ImageEnhance.Sharpness(img)
-            img = enhancer.enhance(2.0)  # Sharpen
+            img = enhancer.enhance(2.0)
             
             img.save(sig_path, "PNG", quality=100)
             
-            # Centering Logic
+            # Scaling & Centering (Your existing settings)
             img_w, img_h = img.size
             box_x = POSITIONS["signature"]["x"]
             box_y = POSITIONS["signature"]["y"]
